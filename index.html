@@ -1,0 +1,461 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Jury du salon</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,500;0,6..96,700;1,6..96,500&family=Manrope:wght@400;600;700&display=swap">
+<style>
+/* Liste mobile d'une colonne, en-tête collant, feuille de notation en bas d'écran */
+:root {
+  --bg: #f6f3f8; --surface: #ffffff; --fg: #1d1830; --muted: #6d6680; --line: #e4dee9;
+  --sash: #b8174f; --sash-soft: #fbe3ec; --gold: #9a6f08; --gold-soft: #f6ecd2; --ok: #1f7a4d;
+  --display: "Bodoni Moda", "Didot", Georgia, serif;
+  --body: "Manrope", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #13101d; --surface: #1d1829; --fg: #f3eff8; --muted: #a59db5; --line: #302a42;
+  --sash: #f0679a; --sash-soft: #3a1a2a; --gold: #e3bc58; --gold-soft: #352b14; --ok: #5fd39a; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #13101d; --surface: #1d1829; --fg: #f3eff8; --muted: #a59db5; --line: #302a42;
+  --sash: #f0679a; --sash-soft: #3a1a2a; --gold: #e3bc58; --gold-soft: #352b14; --ok: #5fd39a; color-scheme: dark }
+* { box-sizing: border-box }
+:root { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px) }
+[hidden] { display: none !important }
+body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 15px; line-height: 1.45 }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg) }
+.wrap { max-width: 560px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 0 96px }
+h1, h2, h3 { font-family: var(--display); font-weight: 700; text-wrap: balance; margin: 0 }
+button, input { font: inherit; color: inherit }
+button { cursor: pointer }
+:focus-visible { outline: 2px solid var(--sash); outline-offset: 2px }
+.muted { color: var(--muted) }
+.eyebrow { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); font-weight: 700 }
+
+.join { padding-block: 48px 24px; display: grid; gap: 20px }
+.join h1 { font-size: 40px; line-height: 1.05 }
+.join h1 em { color: var(--sash); font-style: italic; font-weight: 500 }
+.field { display: grid; gap: 6px }
+.field label { font-weight: 600 }
+.input { width: 100%; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); font-size: 16px }
+.code-input { text-transform: uppercase; letter-spacing: .3em; font-weight: 700 }
+.btn { border: 0; border-radius: 12px; padding: 12px 16px; font-weight: 700; background: var(--sash); color: var(--surface) }
+.btn.ghost { background: transparent; color: var(--fg); border: 1px solid var(--line) }
+.btn.small { padding: 6px 12px; font-size: 13px; border-radius: 10px }
+.btn:disabled { opacity: .45; cursor: default }
+.row { display: flex; gap: 10px; flex-wrap: wrap }
+.row > * { flex: 1 1 140px }
+.err { color: var(--sash); font-weight: 600; min-height: 1.4em }
+.notice { background: var(--gold-soft); color: var(--fg); border-radius: 12px; padding: 10px 12px; font-size: 13px }
+
+.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); padding-block: 12px 8px; display: grid; gap: 10px; border-bottom: 1px solid var(--line) }
+.top-line { display: flex; justify-content: space-between; align-items: center; gap: 12px }
+.who { font-size: 13px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.who b { letter-spacing: .15em }
+.progress { display: flex; align-items: center; gap: 10px; font-variant-numeric: tabular-nums; font-weight: 700; white-space: nowrap }
+.bar { flex: 1; height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; min-width: 60px }
+.bar > i { display: block; height: 100%; background: var(--sash) }
+.tabs { display: flex; gap: 6px }
+.tab { flex: 1; padding: 8px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); font-weight: 600; font-size: 14px }
+.tab[aria-selected="true"] { background: var(--fg); color: var(--bg); border-color: var(--fg) }
+.search { position: relative }
+.search input { padding-left: 38px }
+.search svg { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--muted) }
+.chips { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none }
+.chip { flex: none; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); font-size: 13px; font-weight: 600 }
+.chip[aria-pressed="true"] { background: var(--sash-soft); border-color: var(--sash); color: var(--sash) }
+.letters { display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none }
+.letters button { flex: none; width: 28px; height: 28px; border: 0; border-radius: 8px; background: transparent; font-weight: 700; color: var(--muted) }
+
+.group-h { font-family: var(--display); font-size: 20px; color: var(--muted); padding: 14px 4px 4px }
+.list { display: grid; gap: 6px; padding-top: 8px }
+.item { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; padding: 12px 14px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface) }
+.item .name { flex: 1; min-width: 0 }
+.item .name small { display: block; font-size: 11px; color: var(--muted); letter-spacing: .06em; text-transform: uppercase }
+.item .name span { font-family: var(--display); font-size: 18px; font-weight: 700 }
+.scores { flex: none; display: grid; justify-items: end; gap: 3px }
+.badge { min-width: 52px; text-align: center; padding: 4px 8px; border-radius: 999px; font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums }
+.badge.todo { border: 1px dashed var(--muted); color: var(--muted) }
+.badge.part { background: var(--gold-soft); color: var(--gold) }
+.badge.done { background: var(--sash-soft); color: var(--sash) }
+.room-avg { font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap }
+.room-avg b { color: var(--fg) }
+.empty { padding: 32px 8px; text-align: center }
+.pos { flex: none; width: 26px; text-align: right; font-family: var(--display); font-size: 20px; font-weight: 700; color: var(--muted); font-variant-numeric: tabular-nums }
+.item.cut { margin-top: 18px; position: relative }
+.item.cut::before { content: "Hors du top 12"; position: absolute; top: -20px; left: 4px; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); font-weight: 700 }
+
+.sheet-bg { position: fixed; inset: 0; background: rgb(0 0 0 / .45); z-index: 20 }
+.sheet { position: fixed; left: 0; right: 0; bottom: 0; z-index: 21; background: var(--surface); border-radius: 22px 22px 0 0; max-height: 88vh; overflow-y: auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 18px calc(18px + env(safe-area-inset-bottom, 0px)) }
+.sheet-in { max-width: 560px; margin: 0 auto; display: grid; gap: 18px }
+.sash { display: inline-block; background: var(--sash); color: var(--surface); padding: 4px 18px 4px 12px; clip-path: polygon(0 0, 100% 0, 92% 50%, 100% 100%, 0 100%); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; font-weight: 700 }
+.sheet h2 { font-size: 30px; margin-top: 8px }
+.cat { display: grid; gap: 8px }
+.cat-h { display: flex; justify-content: space-between; font-weight: 600 }
+.cat-h output { font-variant-numeric: tabular-nums; color: var(--sash); font-weight: 700 }
+.scale { display: grid; grid-template-columns: repeat(11, 1fr); gap: 4px }
+.scale button { aspect-ratio: 1; min-width: 0; max-width: 100%; border-radius: 9px; border: 1px solid var(--line); background: var(--bg); font-weight: 700; font-variant-numeric: tabular-nums; padding: 0 }
+.scale button[aria-pressed="true"] { background: var(--sash); border-color: var(--sash); color: var(--surface) }
+
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 16px; display: grid; gap: 10px; margin-top: 16px }
+.card h3 { font-size: 22px }
+.cat-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding-block: 6px; border-top: 1px solid var(--line) }
+.cat-row:first-of-type { border-top: 0 }
+.add { display: flex; gap: 8px }
+.add .input { flex: 1; min-width: 0 }
+@media (prefers-reduced-motion: no-preference) { .sheet.enter { animation: up .22s ease-out } @keyframes up { from { transform: translateY(30px); opacity: .6 } } }
+</style>
+</head>
+<body>
+
+<div class="wrap" id="app"></div>
+
+<script>
+const DEFAULT_CATEGORIES = [{ id: "physique", label: "Physique" }, { id: "charme", label: "Charme" }, { id: "eloquence", label: "Éloquence" }];
+const REGIONS = [
+  ["alsace", "Alsace"], ["aquitaine", "Aquitaine"], ["auvergne", "Auvergne"], ["bourgogne", "Bourgogne"],
+  ["bretagne", "Bretagne"], ["centre", "Centre-Val de Loire"], ["champagne", "Champagne-Ardenne"], ["corse", "Corse"],
+  ["cotedazur", "Côte d'Azur"], ["franchecomte", "Franche-Comté"], ["guadeloupe", "Guadeloupe"], ["guyane", "Guyane"],
+  ["idf", "Île-de-France", "idf paris"], ["languedoc", "Languedoc"], ["limousin", "Limousin"], ["lorraine", "Lorraine"],
+  ["martinique", "Martinique"], ["mayotte", "Mayotte"], ["midipyrenees", "Midi-Pyrénées", "toulouse"],
+  ["npdc", "Nord-Pas-de-Calais", "npdc lille"], ["normandie", "Normandie"], ["nouvellecaledonie", "Nouvelle-Calédonie", "nc"],
+  ["pdl", "Pays de la Loire", "pdl nantes"], ["picardie", "Picardie"], ["poitou", "Poitou-Charentes"], ["provence", "Provence", "paca marseille"],
+  ["reunion", "La Réunion"], ["rhonealpes", "Rhône-Alpes", "lyon"], ["roussillon", "Roussillon", "perpignan"],
+  ["saintmartin", "Saint-Martin-Saint-Barthélemy", "st sbh"], ["tahiti", "Tahiti", "polynesie"]
+].map(([id, name, alias = ""]) => ({ id, name, key: norm(name + " " + alias), letter: norm(name.replace(/^La /, "")).charAt(0).toUpperCase() }))
+ .sort((a, b) => a.letter.localeCompare(b.letter) || a.name.localeCompare(b.name, "fr"));
+const BY_ID = Object.fromEntries(REGIONS.map(r => [r.id, r]));
+
+function norm(s) { return s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9 ]+/g, " ") }
+function esc(s) { return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]) }
+function store(k, v) { try { if (v === undefined) return JSON.parse(localStorage.getItem(k)); localStorage.setItem(k, JSON.stringify(v)) } catch { return null } }
+
+const ME = store("jury.me") || Array.from(crypto.getRandomValues(new Uint8Array(12)), b => b.toString(16).padStart(2, "0")).join("");
+store("jury.me", ME);
+
+const S = {
+  code: store("jury.code") || "", pseudo: store("jury.pseudo") || "", peers: 0, online: true,
+  scores: {}, room: null, jurors: [], tab: "notes", filter: "all", query: "", sheet: null, view: "room", confirmDel: null, err: ""
+};
+const app = document.getElementById("app");
+let net = null, data = null, sendTimer = null;
+
+function cats() { return S.room?.categories?.length ? S.room.categories : DEFAULT_CATEGORIES }
+function isCreator() { return S.room?.createdBy === ME }
+function regionStatus(id, scores = S.scores) {
+  const s = scores[id] || {}, list = cats();
+  const vals = list.map(c => s[c.id]).filter(v => typeof v === "number");
+  const avg = vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : null;
+  return { n: vals.length, avg, state: vals.length === 0 ? "todo" : vals.length < list.length ? "part" : "done" };
+}
+function fmt(n) { return n == null ? "–" : (Math.round(n * 10) / 10).toLocaleString("fr-FR") }
+function byName(a, b) { return BY_ID[a.id].name.localeCompare(BY_ID[b.id].name, "fr") }
+function ranked(scores) {
+  return REGIONS.map(r => ({ id: r.id, avg: regionStatus(r.id, scores).avg })).filter(x => x.avg != null).sort((a, b) => b.avg - a.avg || byName(a, b));
+}
+function allJurors() {
+  const others = S.jurors.filter(j => j.id !== ME && j.scores);
+  return [{ id: ME, pseudo: S.pseudo, scores: S.scores, me: true }, ...others];
+}
+function roomAvg(id) {
+  const avgs = allJurors().map(j => regionStatus(id, j.scores).avg).filter(v => v != null);
+  return avgs.length ? { avg: avgs.reduce((a, b) => a + b, 0) / avgs.length, n: avgs.length } : null;
+}
+function roomRanking() {
+  return REGIONS.map(r => ({ id: r.id, ...roomAvg(r.id) })).filter(x => x.avg != null).sort((a, b) => b.avg - a.avg || byName(a, b));
+}
+
+function syncView() {
+  S.room = data.meta;
+  S.jurors = Object.entries(data.jurors).map(([id, j]) => ({ id, ...j }));
+  S.scores = data.jurors[ME]?.scores || {};
+  store("jury.room." + S.code, data);
+}
+
+function merge(remote) {
+  if (!data || !remote || typeof remote !== "object") return;
+  let changed = false;
+  const m = remote.meta;
+  if (m && typeof m === "object" && (m.updatedAt || 0) > (data.meta.updatedAt || 0)) { data.meta = m; changed = true }
+  for (const [id, j] of Object.entries(remote.jurors || {})) {
+    if (!j || typeof j !== "object") continue;
+    if ((j.updatedAt || 0) > (data.jurors[id]?.updatedAt || 0)) { data.jurors[id] = j; changed = true }
+  }
+  if (!changed) return;
+  if (data.meta.deleted) return leave(`Le salon ${S.code} a été supprimé par son créateur.`);
+  syncView(); render();
+}
+
+function broadcast(payload, target) {
+  if (net) net.send.send(payload, target ? { target } : undefined).catch(() => {});
+}
+function shareAll() { clearTimeout(sendTimer); sendTimer = setTimeout(() => broadcast(data), 250) }
+
+function saveMine() {
+  data.jurors[ME] = { pseudo: S.pseudo, scores: S.scores, updatedAt: Date.now() };
+  syncView(); shareAll();
+}
+function setMeta(patch) {
+  data.meta = { ...data.meta, ...patch, updatedAt: Date.now() };
+  syncView(); render(); broadcast({ meta: data.meta });
+}
+function setCategories(list) { setMeta({ categories: list }) }
+
+function updatePeers() { S.peers = net ? Object.keys(net.room.getPeers()).length : 0; render() }
+
+async function connect(code) {
+  try {
+    const { joinRoom } = await import("https://cdn.jsdelivr.net/npm/trystero@0.26.0/+esm");
+    if (S.code !== code) return;
+    const room = joinRoom({ appId: "jury-du-salon-miss-france" }, "salon-" + code);
+    const send = room.makeAction("etat");
+    net = { room, send };
+    send.onMessage = remote => merge(remote);
+    room.onPeerJoin = peer => { broadcast(data, peer); updatePeers() };
+    room.onPeerLeave = updatePeers;
+  } catch { S.err = "Connexion aux autres jurés impossible : tes notes restent sur ce téléphone."; render() }
+}
+
+function enter(code, create) {
+  S.err = "";
+  S.code = code; store("jury.code", code); store("jury.pseudo", S.pseudo);
+  data = store("jury.room." + code) || { meta: { categories: DEFAULT_CATEGORIES, createdBy: null, updatedAt: 0 }, jurors: {} };
+  if (create) data.meta = { categories: DEFAULT_CATEGORIES, createdBy: ME, updatedAt: Date.now() };
+  S.scores = data.jurors[ME]?.scores || {};
+  if (create || (data.jurors[ME] && data.jurors[ME].pseudo !== S.pseudo)) saveMine(); else syncView();
+  render();
+  connect(code);
+}
+
+function leave(message = "", wipe = true) {
+  if (net) net.room.leave().catch(() => {});
+  if (wipe) store("jury.room." + S.code, null);
+  store("jury.code", "");
+  net = null; data = null;
+  Object.assign(S, { room: null, jurors: [], scores: {}, code: "", peers: 0, tab: "notes", view: "room", sheet: null, confirmDel: null, confirmRoom: null, err: message });
+  render();
+}
+
+async function deleteRoom() {
+  const code = S.code;
+  setMeta({ deleted: true });
+  await new Promise(r => setTimeout(r, 400));
+  leave(`Salon ${code} supprimé.`);
+}
+
+function render() {
+  if (!S.room) return renderJoin();
+  const done = REGIONS.filter(r => regionStatus(r.id).state === "done").length;
+  const searchFocused = document.activeElement?.id === "q";
+  const sheetScroll = document.querySelector(".sheet")?.scrollTop || 0;
+  const n = allJurors().length;
+  app.innerHTML = `
+    <header class="top">
+      <div class="top-line">
+        <div class="who">Salon <b>${esc(S.code)}</b> · ${esc(S.pseudo)} · ${n} juré${n > 1 ? "s" : ""} · <span class="${S.peers ? "" : "muted"}">${S.peers ? `${S.peers} en ligne` : "hors ligne"}</span></div>
+        <div class="progress" aria-label="Régions notées">${done}/${REGIONS.length}</div>
+      </div>
+      <div class="bar"><i style="width:${done / REGIONS.length * 100}%"></i></div>
+      <div class="tabs" role="tablist">
+        <button class="tab" role="tab" data-tab="notes" aria-selected="${S.tab === "notes"}">Mes notes</button>
+        <button class="tab" role="tab" data-tab="classement" aria-selected="${S.tab === "classement"}">Classement</button>
+        <button class="tab" role="tab" data-tab="reglages" aria-selected="${S.tab === "reglages"}">Réglages</button>
+      </div>
+      ${S.tab === "notes" ? notesControls() : S.tab === "classement" ? salonControls() : ""}
+    </header>
+    ${S.err ? `<p class="err">${esc(S.err)}</p>` : ""}
+    ${!S.peers && n < 2 ? `<p class="notice" style="margin-top:12px">En attente des autres jurés. Donne-leur le code <b>${esc(S.code)}</b>. Tes notes sont gardées sur ce téléphone et partiront dès qu'un juré sera connecté.</p>` : ""}
+    ${S.tab === "notes" ? notesList() : S.tab === "classement" ? salonPanel() : categoriesPanel()}
+    ${S.sheet ? sheet() : ""}`;
+  S.sheetOpening = false;
+  const sh = document.querySelector(".sheet");
+  if (sh) sh.scrollTop = sheetScroll;
+  const q = document.getElementById("q");
+  if (q && searchFocused) { q.focus(); q.setSelectionRange(q.value.length, q.value.length) }
+}
+
+function roomAvgLabel(id) {
+  const r = roomAvg(id);
+  return r ? `<span class="room-avg">salon <b>${fmt(r.avg)}</b></span>` : `<span class="room-avg">salon –</span>`;
+}
+
+function notesControls() {
+  const chips = [["all", "Toutes"], ["todo", "À noter"]];
+  const letters = [...new Set(REGIONS.map(r => r.letter))];
+  return `
+    <div class="search">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input id="q" class="input" type="search" placeholder="Chercher une région…" autocomplete="off" value="${esc(S.query)}" aria-label="Chercher une région">
+    </div>
+    <div class="chips">${chips.map(([k, l]) => `<button class="chip" data-filter="${k}" aria-pressed="${S.filter === k}">${l}${k === "todo" ? ` (${REGIONS.filter(r => regionStatus(r.id).state !== "done").length})` : ""}</button>`).join("")}</div>
+    ${!S.query ? `<nav class="letters" aria-label="Aller à la lettre">${letters.map(l => `<button data-letter="${l}">${l}</button>`).join("")}</nav>` : ""}`;
+}
+
+function visibleRegions() {
+  const q = norm(S.query).trim();
+  return REGIONS.filter(r => {
+    if (q && !q.split(/\s+/).every(w => r.key.includes(w))) return false;
+    if (S.filter === "todo") return regionStatus(r.id).state !== "done";
+    return true;
+  });
+}
+
+function badge(id, scores) {
+  const st = regionStatus(id, scores);
+  const label = st.state === "todo" ? "à noter" : st.state === "part" ? `${fmt(st.avg)} · ${st.n}/${cats().length}` : fmt(st.avg);
+  return `<span class="badge ${st.state}">${label}</span>`;
+}
+
+function notesList() {
+  const list = visibleRegions();
+  if (!list.length) return `<div class="empty muted">${S.filter === "todo" && !S.query ? "Tout est noté. Bravo, juré." : "Aucune région ne correspond."}</div>`;
+  let html = "", last = "";
+  for (const r of list) {
+    if (!S.query && r.letter !== last) { last = r.letter; html += `<div class="group-h" id="L-${r.letter}">${r.letter}</div>` }
+    html += `<button class="item" data-open="${r.id}">
+      <div class="name"><small>Miss</small><span>${esc(r.name)}</span></div>
+      <div class="scores">${badge(r.id)}${roomAvgLabel(r.id)}</div></button>`;
+  }
+  return `<div class="list">${html}</div>`;
+}
+
+function rankingList(scores, mine) {
+  const list = ranked(scores);
+  if (!list.length) return `<div class="empty muted">${mine ? "Note une première Miss pour voir ton classement." : "Pas encore de note."}</div>`;
+  const rest = REGIONS.length - list.length;
+  return `<div class="list">${list.map((x, i) => {
+    const s = scores[x.id];
+    return `<button class="item${i === 12 ? " cut" : ""}" ${mine ? `data-open="${x.id}"` : ""}>
+      <span class="pos">${i + 1}</span>
+      <div class="name"><small>${cats().map(c => `${esc(c.label)} ${s[c.id] ?? "–"}`).join(" · ")}</small><span>${esc(BY_ID[x.id].name)}</span></div>
+      <div class="scores">${badge(x.id, scores)}${roomAvgLabel(x.id)}</div></button>`;
+  }).join("")}</div>
+  ${rest ? `<p class="muted empty">${rest} région${rest > 1 ? "s" : ""} pas encore notée${rest > 1 ? "s" : ""}.</p>` : ""}`;
+}
+
+function salonControls() {
+  const people = allJurors();
+  if (S.view !== "room" && !people.some(j => j.id === S.view)) S.view = "room";
+  return `<div class="chips">
+    <button class="chip" data-view="room" aria-pressed="${S.view === "room"}">Moyenne du salon</button>
+    ${people.map(j => `<button class="chip" data-view="${esc(j.id)}" aria-pressed="${S.view === j.id}">${j.me ? "Moi" : esc(j.pseudo || "Juré")}</button>`).join("")}  </div>`;
+}
+
+function salonPanel() {
+  if (S.view !== "room") {
+    const j = allJurors().find(x => x.id === S.view);
+    const all = ranked(j.scores);
+    const mean = all.length ? all.reduce((a, b) => a + b.avg, 0) / all.length : null;
+    return `<p class="muted" style="padding-top:12px">${j.me ? "Ton classement" : `Classement de ${esc(j.pseudo || "Juré")}`} · ${all.length} notée${all.length > 1 ? "s" : ""} · ${fmt(mean)} de moyenne</p>${rankingList(j.scores, j.me)}`;
+  }
+  const list = roomRanking();
+  if (!list.length) return `<div class="empty muted">Personne n'a encore noté.</div>`;
+  return `<div class="list">${list.map((x, i) => `<div class="item${i === 12 ? " cut" : ""}">
+    <span class="pos">${i + 1}</span>
+    <div class="name"><small>${x.n} juré${x.n > 1 ? "s" : ""} sur ${allJurors().length}</small><span>${esc(BY_ID[x.id].name)}</span></div>
+    <div class="scores"><span class="badge done">${fmt(x.avg)}</span><span class="room-avg">moi <b>${fmt(regionStatus(x.id).avg)}</b></span></div></div>`).join("")}</div>`;
+}
+
+function categoriesPanel() {
+  const list = cats(), creator = isCreator();
+  return `<section class="card">
+    <h3>Catégories de notation</h3>
+    <p class="muted">${creator ? "Tu as créé ce salon : tu choisis les catégories. Chacune est notée sur 10, la moyenne fait le classement." : "Seule la personne qui a créé le salon peut les changer."}</p>
+    <div>${list.map(c => `<div class="cat-row"><span>${esc(c.label)}</span>${creator && list.length > 1 ? (S.confirmDel === c.id
+      ? `<span class="row" style="flex:none"><button class="btn small ghost" data-cancel-del>Garder</button><button class="btn small" data-del="${esc(c.id)}">Supprimer</button></span>`
+      : `<button class="btn small ghost" data-ask-del="${esc(c.id)}">Supprimer</button>`) : ""}</div>`).join("")}</div>
+    ${creator ? `<form class="add" id="add-cat"><input id="cat-name" class="input" maxlength="24" placeholder="Nouvelle catégorie" autocomplete="off"><button class="btn">Ajouter</button></form>
+    <p class="muted" style="font-size:13px">Supprimer une catégorie ne l'efface pas des notes : si tu la rajoutes avec le même nom, les notes reviennent.</p>` : ""}
+  </section>
+  <section class="card">
+    <h3>Salon ${esc(S.code)}</h3>
+    ${S.confirmRoom === "delete" ? `<p>Supprimer le salon efface les notes de tous les jurés connectés, sans retour possible. Leurs téléphones reviennent à l'accueil.</p>
+      <div class="row"><button class="btn ghost" data-room="">Garder le salon</button><button class="btn" data-room="delete-now">Supprimer pour tout le monde</button></div>`
+    : S.confirmRoom === "leave" ? `<p>Tes notes restent sur ce téléphone et chez les autres jurés : tu les retrouveras en rejoignant le code ${esc(S.code)}.</p>
+      <div class="row"><button class="btn ghost" data-room="">Rester</button><button class="btn" data-room="leave-now">Quitter</button></div>`
+    : `<p class="muted">Quitter te ramène à l'accueil pour rejoindre ou créer un autre salon.${creator ? " Tu peux aussi supprimer ce salon et toutes ses notes." : ""}</p>
+      <div class="row"><button class="btn ghost" data-room="leave">Quitter le salon</button>${creator ? `<button class="btn ghost" data-room="delete">Supprimer le salon</button>` : ""}</div>`}
+  </section>`;
+}
+
+function sheet() {
+  const r = BY_ID[S.sheet], s = S.scores[r.id] || {};
+  return `<div class="sheet-bg" data-close></div>
+  <div class="sheet${S.sheetOpening ? " enter" : ""}" role="dialog" aria-modal="true" aria-label="Noter Miss ${esc(r.name)}"><div class="sheet-in">
+    <div><span class="sash">Miss</span><h2>${esc(r.name)}</h2></div>
+    ${cats().map(c => `<div class="cat">
+      <div class="cat-h"><span>${esc(c.label)}</span><output>${s[c.id] ?? "–"}<span class="muted"> /10</span></output></div>
+      <div class="scale" role="group" aria-label="${esc(c.label)} sur 10">
+        ${Array.from({ length: 11 }, (_, n) => `<button data-score="${esc(c.id)}:${n}" aria-pressed="${s[c.id] === n}">${n}</button>`).join("")}
+      </div></div>`).join("")}
+    <button class="btn" data-close>Fermer</button>
+    </div></div>`;
+}
+
+function renderJoin() {
+  app.innerHTML = `<div class="join">
+    <div><span class="eyebrow">Soirée Miss France</span><h1>Le jury du <em>salon</em></h1></div>
+    <p class="muted">Chacun note sur son téléphone, et le classement du salon se construit en direct.</p>
+    <div class="field"><label for="pseudo">Ton pseudo</label><input id="pseudo" class="input" maxlength="20" autocomplete="nickname" value="${esc(S.pseudo)}" placeholder="Ex. Tata Josiane"></div>
+    <div class="field"><label for="code">Code du salon</label><input id="code" class="input code-input" maxlength="4" autocomplete="off" placeholder="ABCD"></div>
+    <p class="err">${esc(S.err)}</p>
+    <div class="row">
+      <button class="btn" id="join">Rejoindre</button>
+      <button class="btn ghost" id="create">Créer un salon</button>
+    </div></div>`;
+}
+
+app.addEventListener("input", e => {
+  if (e.target.id === "q") { S.query = e.target.value; render() }
+});
+app.addEventListener("submit", e => {
+  if (e.target.id !== "add-cat") return;
+  e.preventDefault();
+  const label = document.getElementById("cat-name").value.trim();
+  const id = norm(label).replace(/ +/g, "");
+  if (!id) return;
+  if (cats().some(c => c.id === id)) { S.err = `La catégorie « ${label} » existe déjà.`; return render() }
+  S.err = "";
+  setCategories([...cats(), { id, label }]);
+});
+app.addEventListener("click", e => {
+  const t = e.target.closest("button, [data-close]");
+  if (!t) return;
+  const d = t.dataset;
+  if (t.id === "join" || t.id === "create") {
+    S.pseudo = document.getElementById("pseudo").value.trim();
+    const code = t.id === "create" ? Array.from({ length: 4 }, () => "ABCDEFGHJKLMNPQRSTUVWXYZ"[Math.floor(Math.random() * 24)]).join("") : document.getElementById("code").value.trim().toUpperCase();
+    if (!S.pseudo) { S.err = "Choisis un pseudo pour que le salon te reconnaisse."; return render() }
+    if (!/^[A-Z]{4}$/.test(code)) { S.err = "Le code fait 4 lettres."; return render() }
+    return enter(code, t.id === "create");
+  }
+  if (d.tab) { S.tab = d.tab; S.sheet = null; return render() }
+  if (d.view) { S.view = d.view; S.confirmDel = null; S.confirmRoom = null; return render() }
+  if (d.filter) { S.filter = d.filter; return render() }
+  if (d.letter) return document.getElementById("L-" + d.letter)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  if (d.open) { S.sheet = d.open; S.sheetOpening = true; return render() }
+  if ("close" in d) { S.sheet = null; S.query = ""; render(); return S.tab === "notes" && document.getElementById("q")?.focus() }
+  if ("room" in d) {
+    if (d.room === "leave-now") return leave("", false);
+    if (d.room === "delete-now") return deleteRoom();
+    S.confirmRoom = d.room || null; return render();
+  }
+  if (d.askDel) { S.confirmDel = d.askDel; return render() }
+  if ("cancelDel" in d) { S.confirmDel = null; return render() }
+  if (d.del) { S.confirmDel = null; return setCategories(cats().filter(c => c.id !== d.del)) }
+  if (d.score) {
+    const [cat, n] = d.score.split(":"), cur = { ...(S.scores[S.sheet] || {}) };
+    if (cur[cat] === +n) delete cur[cat]; else cur[cat] = +n;
+    S.scores = { ...S.scores, [S.sheet]: cur }; render(); return saveMine();
+  }
+});
+document.addEventListener("visibilitychange", () => { if (!document.hidden && data) { broadcast(data); updatePeers() } });
+window.addEventListener("online", () => { if (data) broadcast(data) });
+document.addEventListener("keydown", e => { if (e.key === "Escape" && S.sheet) { S.sheet = null; render() } });
+
+if (S.code && S.pseudo) enter(S.code, false); else render();
+</script>
+</body>
+</html>
