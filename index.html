@@ -112,6 +112,7 @@ button { cursor: pointer }
 
 <div class="wrap" id="app"></div>
 
+<script src="https://cdn.jsdelivr.net/npm/mqtt@5.15.2/dist/mqtt.min.js"></script>
 <script>
 const DEFAULT_CATEGORIES = [{ id: "physique", label: "Physique" }, { id: "charme", label: "Charme" }, { id: "eloquence", label: "Éloquence" }];
 const REGIONS = [
@@ -136,11 +137,11 @@ const ME = store("jury.me") || Array.from(crypto.getRandomValues(new Uint8Array(
 store("jury.me", ME);
 
 const S = {
-  code: store("jury.code") || "", pseudo: store("jury.pseudo") || "", peers: 0, online: true,
+  code: store("jury.code") || "", pseudo: store("jury.pseudo") || "", online: false,
   scores: {}, room: null, jurors: [], tab: "notes", filter: "all", query: "", sheet: null, view: "room", confirmDel: null, err: ""
 };
 const app = document.getElementById("app");
-let net = null, data = null, sendTimer = null;
+let clients = [], data = null, sendTimer = null;
 
 function cats() { return S.room?.categories?.length ? S.room.categories : DEFAULT_CATEGORIES }
 function isCreator() { return S.room?.createdBy === ME }
@@ -188,34 +189,55 @@ function merge(remote) {
   syncView(); render();
 }
 
-function broadcast(payload, target) {
-  if (net) net.send.send(payload, target ? { target } : undefined).catch(() => {});
+const BROKERS = ["wss://broker.emqx.io:8084/mqtt", "wss://test.mosquitto.org:8081"];
+function topic(code, rest) { return "jury-du-salon-mf/v1/" + code + "/" + rest }
+
+function publish(rest, payload, only) {
+  const msg = payload == null ? "" : JSON.stringify(payload);
+  for (const c of only || clients) if (c.connected) c.publish(topic(S.code, rest), msg, { retain: true, qos: 1 });
 }
-function shareAll() { clearTimeout(sendTimer); sendTimer = setTimeout(() => broadcast(data), 250) }
+function publishAll(only) {
+  if (!data) return;
+  if (data.meta.updatedAt) publish("meta", data.meta, only);
+  for (const [id, j] of Object.entries(data.jurors)) publish("j/" + id, j, only);
+}
+function shareMine() { clearTimeout(sendTimer); sendTimer = setTimeout(() => publish("j/" + ME, data.jurors[ME]), 250) }
 
 function saveMine() {
   data.jurors[ME] = { pseudo: S.pseudo, scores: S.scores, updatedAt: Date.now() };
-  syncView(); shareAll();
+  syncView(); shareMine();
 }
 function setMeta(patch) {
   data.meta = { ...data.meta, ...patch, updatedAt: Date.now() };
-  syncView(); render(); broadcast({ meta: data.meta });
+  syncView(); render(); publish("meta", data.meta);
 }
 function setCategories(list) { setMeta({ categories: list }) }
 
-function updatePeers() { S.peers = net ? Object.keys(net.room.getPeers()).length : 0; render() }
+function updateOnline() {
+  const online = clients.some(c => c.connected);
+  if (online !== S.online) { S.online = online; render() }
+}
 
-async function connect(code) {
-  try {
-    const { joinRoom } = await import("https://cdn.jsdelivr.net/npm/trystero@0.26.0/+esm");
-    if (S.code !== code) return;
-    const room = joinRoom({ appId: "jury-du-salon-miss-france" }, "salon-" + code);
-    const send = room.makeAction("etat");
-    net = { room, send };
-    send.onMessage = remote => merge(remote);
-    room.onPeerJoin = peer => { broadcast(data, peer); updatePeers() };
-    room.onPeerLeave = updatePeers;
-  } catch { S.err = "Connexion aux autres jurés impossible : tes notes restent sur ce téléphone."; render() }
+function connect(code) {
+  if (!window.mqtt) { S.err = "Connexion au salon impossible : tes notes restent sur cet appareil."; return render() }
+  const prefix = topic(code, "");
+  clients = BROKERS.map(url => {
+    const c = mqtt.connect(url, { reconnectPeriod: 3000, connectTimeout: 10000 });
+    c.on("connect", () => { c.subscribe(prefix + "#", { qos: 1 }); publishAll([c]); updateOnline() });
+    c.on("close", updateOnline);
+    c.on("error", () => {});
+    c.on("message", (t, p) => {
+      if (S.code !== code) return;
+      const text = p.toString();
+      if (!text) return;
+      try {
+        const value = JSON.parse(text), rest = t.slice(prefix.length);
+        if (rest === "meta") merge({ meta: value });
+        else if (rest.startsWith("j/")) merge({ jurors: { [rest.slice(2)]: value } });
+      } catch {}
+    });
+    return c;
+  });
 }
 
 function enter(code, create) {
@@ -230,18 +252,19 @@ function enter(code, create) {
 }
 
 function leave(message = "", wipe = true) {
-  if (net) net.room.leave().catch(() => {});
+  clients.forEach(c => c.end(true));
   if (wipe) store("jury.room." + S.code, null);
   store("jury.code", "");
-  net = null; data = null;
-  Object.assign(S, { room: null, jurors: [], scores: {}, code: "", peers: 0, tab: "notes", view: "room", sheet: null, confirmDel: null, confirmRoom: null, err: message });
+  clients = []; data = null;
+  Object.assign(S, { room: null, jurors: [], scores: {}, code: "", online: false, tab: "notes", view: "room", sheet: null, confirmDel: null, confirmRoom: null, err: message });
   render();
 }
 
 async function deleteRoom() {
-  const code = S.code;
+  const code = S.code, ids = Object.keys(data.jurors);
   setMeta({ deleted: true });
-  await new Promise(r => setTimeout(r, 400));
+  ids.forEach(id => publish("j/" + id, null));
+  await new Promise(r => setTimeout(r, 800));
   leave(`Salon ${code} supprimé.`);
 }
 
@@ -254,7 +277,7 @@ function render() {
   app.innerHTML = `
     <header class="top">
       <div class="top-line">
-        <div class="who">Salon <b>${esc(S.code)}</b> · ${esc(S.pseudo)} · ${n} juré${n > 1 ? "s" : ""} · <span class="${S.peers ? "" : "muted"}">${S.peers ? `${S.peers} en ligne` : "hors ligne"}</span></div>
+        <div class="who">Salon <b>${esc(S.code)}</b> · ${esc(S.pseudo)} · ${n} juré${n > 1 ? "s" : ""} · <span class="${S.online ? "" : "muted"}">${S.online ? "connecté" : "hors ligne"}</span></div>
         <div class="progress" aria-label="Régions notées">${done}/${REGIONS.length}</div>
       </div>
       <div class="bar"><i style="width:${done / REGIONS.length * 100}%"></i></div>
@@ -266,7 +289,7 @@ function render() {
       ${S.tab === "notes" ? notesControls() : S.tab === "classement" ? salonControls() : ""}
     </header>
     ${S.err ? `<p class="err">${esc(S.err)}</p>` : ""}
-    ${!S.peers && n < 2 ? `<p class="notice" style="margin-top:12px">En attente des autres jurés. Donne-leur le code <b>${esc(S.code)}</b>. Tes notes sont gardées sur ce téléphone et partiront dès qu'un juré sera connecté.</p>` : ""}
+    ${!S.online ? `<p class="notice" style="margin-top:12px">Connexion au salon en cours. Tes notes sont gardées sur cet appareil et partiront dès que la connexion revient.</p>` : n < 2 ? `<p class="notice" style="margin-top:12px">En attente des autres jurés. Donne-leur le code <b>${esc(S.code)}</b>.</p>` : ""}
     ${S.tab === "notes" ? notesList() : S.tab === "classement" ? salonPanel() : categoriesPanel()}
     ${S.sheet ? sheet() : ""}`;
   S.sheetOpening = false;
@@ -451,8 +474,8 @@ app.addEventListener("click", e => {
     S.scores = { ...S.scores, [S.sheet]: cur }; render(); return saveMine();
   }
 });
-document.addEventListener("visibilitychange", () => { if (!document.hidden && data) { broadcast(data); updatePeers() } });
-window.addEventListener("online", () => { if (data) broadcast(data) });
+document.addEventListener("visibilitychange", () => { if (!document.hidden && data) publishAll() });
+window.addEventListener("online", () => { if (data) publishAll() });
 document.addEventListener("keydown", e => { if (e.key === "Escape" && S.sheet) { S.sheet = null; render() } });
 
 if (S.code && S.pseudo) enter(S.code, false); else render();
